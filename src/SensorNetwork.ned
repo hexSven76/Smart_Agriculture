@@ -11,7 +11,7 @@ network AgricultureNetwork
     parameters:
         int numSensors = default(4);
         
-    @display("bgb=60,30;bgi=showcases/warehouse,s");
+    @display("bgb=600,600");
 
     submodules:
         configurator: Ipv4NetworkConfigurator {
