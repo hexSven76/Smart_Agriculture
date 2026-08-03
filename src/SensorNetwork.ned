@@ -8,35 +8,31 @@ import inet.visualizer.canvas.integrated.IntegratedCanvasVisualizer;
 
 network AgricultureNetwork
 {
+    parameters:
+        int numSensors = default(4);
+        
     @display("bgb=60,30;bgi=showcases/warehouse,s");
+
     submodules:
         configurator: Ipv4NetworkConfigurator {
-            @display("p=3.4662657,4.033473");
+            @display("p=3,4");
         }
         visualizer: IntegratedCanvasVisualizer {
-            @display("p=3.4662657,9.264383");
+            @display("p=3,9");
         }
         radioMedium: RadioMedium {
-            @display("p=3.4032426,14.0541315");
+            @display("p=3,14");
         }
-        sensor4: SensorNode {
-            @display("p=22,6.5;i=misc/sensor2");
-        }
-        sensor1: SensorNode {
-            @display("p=16.482326,20.196255;i=misc/sensor2");
-        }
-        sensor2: SensorNode {
-            @display("p=33.772572,16.275303;i=misc/sensor2");
-        }
-        sensor3: SensorNode {
-            @display("p=35,6.5;i=misc/sensor2");
+        sensor[numSensors]: SensorNode {
+            @display("p=10,10;i=misc/sensor2");
         }
         gateway: SensorNode {
-            @display("p=28.5,13;i=misc/sensorgateway");
+            @display("p=28,13;i=misc/sensorgateway");
         }
         server: StandardHost {
-            @display("p=38.35591,12.96182");
+            @display("p=38,13");
         }
+
     connections:
         gateway.ethg++ <--> Eth100M <--> server.ethg++;
 }
