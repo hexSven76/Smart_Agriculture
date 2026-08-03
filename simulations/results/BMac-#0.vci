@@ -1,0 +1,415 @@
+file 81188 1785717396                                           
+version 3
+run BMac-0-20260802-03:51:18-24180
+attr configname BMac
+attr datetime 20260802-03:51:18
+attr datetimef 20260802-035118
+attr experiment BMac
+attr inifile omnetpp.ini
+attr iterationvars ""
+attr iterationvarsd ""
+attr iterationvarsf ""
+attr measurement ""
+attr network AgricultureNetwork
+attr processid 24180
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+config image-path ../../inet-4.6.0/images
+config network AgricultureNetwork
+config **.wlan[*].mac.typename BMac
+config **.wlan[*].mac.headerLength 1B
+config **.wlan[*].mac.slotDuration 0.025s
+config **.wlan[*].queue.typename DropTailQueue
+config **.wlan[*].queue.packetCapacity 20
+config simtime-resolution ps
+config **.vector-recording true
+config **.packetReceived:count.scalar-recording true
+config **.residualEnergyCapacity:last.scalar-recording true
+config **.scalar-recording true
+config **.param-recording false
+config sim-time-limit 10s
+config **.wlan[*].typename WirelessInterface
+config **.wlan[*].radio.typename ApskRadio
+config **.wlan[*].radio.signalAnalogRepresentation "\"scalar\""
+config **.arp.typename GlobalArp
+config *.gateway.forwarding true
+config **.maxTransmissionDuration 100ms
+config *.configurator.addStaticRoutes false
+config *.configurator.config "xmldoc(\"config.xml\")"
+config **.radio.centerFrequency 2.45GHz
+config **.radio.bandwidth 2.8MHz
+config **.radio.transmitter.bitrate "19200 bps"
+config **.radio.transmitter.headerLength 8b
+config **.radio.transmitter.preambleDuration 0.0001s
+config **.radio.transmitter.power 2.24mW
+config **.radio.receiver.energyDetection -90dBm
+config **.radio.receiver.sensitivity -100dBm
+config **.radio.receiver.snirThreshold -8dB
+config *.radioMedium.backgroundNoise.power -110dBm
+config **.wlan[*].mac.headerLength 8b
+config *.sensor*.numApps 1
+config *.sensor*.app[0].typename UdpBasicApp
+config *.sensor*.app[0].destAddresses "\"server\""
+config *.sensor*.app[0].destPort 1000
+config *.sensor*.app[0].sendInterval 1s
+config *.sensor*.app[0].startTime exponential(1s)
+config *.sensor*.app[0].messageLength 10Byte
+config *.server.numApps 1
+config *.server.app[0].typename UdpSink
+config *.server.app[0].localPort 1000
+config *.visualizer.routingTableVisualizer.displayRoutingTables false
+config *.visualizer.routingTableVisualizer.displayRoutesIndividually false
+config *.visualizer.routingTableVisualizer.lineShift 0
+config *.visualizer.routingTableVisualizer.displayLabels false
+config *.visualizer.infoVisualizer.modules "\"*.server.app[0]\""
+config *.visualizer.infoVisualizer.format "\"%t\""
+config *.visualizer.networkRouteVisualizer.displayRoutes true
+config *.visualizer.physicalLinkVisualizer.displayLinks true
+
+vector 0 AgricultureNetwork.sensor4.energyStorage powerConsumption:vector ETV
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source powerConsumptionChanged
+attr title "Power consumption"
+attr unit W
+0	79850 27 0 0 0 0 3 0 0 0 0
+vector 7 AgricultureNetwork.sensor4.wlan[0].queue queueLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + count(packetPushStarted) - count(packetPulled) - count(packetRemoved) - count(packetDropped)))"
+attr title "queue length"
+attr unit pk
+7	79877 45 0 0 0 0 5 0 0 0 0
+vector 8 AgricultureNetwork.sensor4.wlan[0].queue queueBitLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + sum(packetLength(packetPushStarted)) - sum(packetLength(packetPulled)) - sum(packetLength(packetRemoved)) - sum(packetLength(packetDropped))))"
+attr title "queue bit length"
+attr unit b
+8	79922 45 0 0 0 0 5 0 0 0 0
+vector 21 AgricultureNetwork.sensor4.wlan[0].radio.energyConsumer powerConsumption:vector ETV
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source powerConsumptionChanged
+attr title "Power consumption"
+attr unit W
+21	79967 20 0 0 0 0 2 0 0 0 0
+vector 22 AgricultureNetwork.sensor4.wlan[0].radio radioMode:vector ETV
+attr enum OFF,SLEEP,RECEIVER,TRANSMITTER,TRANSCEIVER,SWITCHING
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source radioModeChanged
+attr title "Radio mode"
+attr type enum
+22	79987 20 0 0 0 0 2 0 0 0 0
+vector 38 AgricultureNetwork.sensor4.udp passedUpPk:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetSentToUpper
+attr title "packets passed up, count"
+38	80007 10 0 0 0 0 1 0 0 0 0
+vector 39 AgricultureNetwork.sensor4.udp droppedPkWrongPort:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetDropReasonIsNoPortFound(packetDropped)
+attr title "packets dropped (wrong port), count"
+39	80017 10 0 0 0 0 1 0 0 0 0
+vector 40 AgricultureNetwork.sensor4.udp droppedPkBadChecksum:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetDropReasonIsIncorrectlyReceived(packetDropped)
+attr title "packets dropped (checksum error), count"
+40	80027 10 0 0 0 0 1 0 0 0 0
+vector 46 AgricultureNetwork.sensor1.energyStorage powerConsumption:vector ETV
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source powerConsumptionChanged
+attr title "Power consumption"
+attr unit W
+46	80037 30 0 0 0 0 3 0 0 0 0
+vector 53 AgricultureNetwork.sensor1.wlan[0].queue queueLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + count(packetPushStarted) - count(packetPulled) - count(packetRemoved) - count(packetDropped)))"
+attr title "queue length"
+attr unit pk
+53	80067 50 0 0 0 0 5 0 0 0 0
+vector 54 AgricultureNetwork.sensor1.wlan[0].queue queueBitLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + sum(packetLength(packetPushStarted)) - sum(packetLength(packetPulled)) - sum(packetLength(packetRemoved)) - sum(packetLength(packetDropped))))"
+attr title "queue bit length"
+attr unit b
+54	80117 50 0 0 0 0 5 0 0 0 0
+vector 67 AgricultureNetwork.sensor1.wlan[0].radio.energyConsumer powerConsumption:vector ETV
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source powerConsumptionChanged
+attr title "Power consumption"
+attr unit W
+67	80167 20 0 0 0 0 2 0 0 0 0
+vector 68 AgricultureNetwork.sensor1.wlan[0].radio radioMode:vector ETV
+attr enum OFF,SLEEP,RECEIVER,TRANSMITTER,TRANSCEIVER,SWITCHING
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source radioModeChanged
+attr title "Radio mode"
+attr type enum
+68	80187 20 0 0 0 0 2 0 0 0 0
+vector 84 AgricultureNetwork.sensor1.udp passedUpPk:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetSentToUpper
+attr title "packets passed up, count"
+84	80207 10 0 0 0 0 1 0 0 0 0
+vector 85 AgricultureNetwork.sensor1.udp droppedPkWrongPort:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetDropReasonIsNoPortFound(packetDropped)
+attr title "packets dropped (wrong port), count"
+85	80217 10 0 0 0 0 1 0 0 0 0
+vector 86 AgricultureNetwork.sensor1.udp droppedPkBadChecksum:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetDropReasonIsIncorrectlyReceived(packetDropped)
+attr title "packets dropped (checksum error), count"
+86	80227 10 0 0 0 0 1 0 0 0 0
+vector 92 AgricultureNetwork.sensor2.energyStorage powerConsumption:vector ETV
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source powerConsumptionChanged
+attr title "Power consumption"
+attr unit W
+92	80237 30 0 0 0 0 3 0 0 0 0
+vector 99 AgricultureNetwork.sensor2.wlan[0].queue queueLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + count(packetPushStarted) - count(packetPulled) - count(packetRemoved) - count(packetDropped)))"
+attr title "queue length"
+attr unit pk
+99	80267 50 0 0 0 0 5 0 0 0 0
+vector 100 AgricultureNetwork.sensor2.wlan[0].queue queueBitLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + sum(packetLength(packetPushStarted)) - sum(packetLength(packetPulled)) - sum(packetLength(packetRemoved)) - sum(packetLength(packetDropped))))"
+attr title "queue bit length"
+attr unit b
+100	80317 55 0 0 0 0 5 0 0 0 0
+vector 113 AgricultureNetwork.sensor2.wlan[0].radio.energyConsumer powerConsumption:vector ETV
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source powerConsumptionChanged
+attr title "Power consumption"
+attr unit W
+113	80372 22 0 0 0 0 2 0 0 0 0
+vector 114 AgricultureNetwork.sensor2.wlan[0].radio radioMode:vector ETV
+attr enum OFF,SLEEP,RECEIVER,TRANSMITTER,TRANSCEIVER,SWITCHING
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source radioModeChanged
+attr title "Radio mode"
+attr type enum
+114	80394 22 0 0 0 0 2 0 0 0 0
+vector 130 AgricultureNetwork.sensor2.udp passedUpPk:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetSentToUpper
+attr title "packets passed up, count"
+130	80416 11 0 0 0 0 1 0 0 0 0
+vector 131 AgricultureNetwork.sensor2.udp droppedPkWrongPort:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetDropReasonIsNoPortFound(packetDropped)
+attr title "packets dropped (wrong port), count"
+131	80427 11 0 0 0 0 1 0 0 0 0
+vector 132 AgricultureNetwork.sensor2.udp droppedPkBadChecksum:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetDropReasonIsIncorrectlyReceived(packetDropped)
+attr title "packets dropped (checksum error), count"
+132	80438 11 0 0 0 0 1 0 0 0 0
+vector 138 AgricultureNetwork.sensor3.energyStorage powerConsumption:vector ETV
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source powerConsumptionChanged
+attr title "Power consumption"
+attr unit W
+138	80449 33 0 0 0 0 3 0 0 0 0
+vector 145 AgricultureNetwork.sensor3.wlan[0].queue queueLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + count(packetPushStarted) - count(packetPulled) - count(packetRemoved) - count(packetDropped)))"
+attr title "queue length"
+attr unit pk
+145	80482 55 0 0 0 0 5 0 0 0 0
+vector 146 AgricultureNetwork.sensor3.wlan[0].queue queueBitLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + sum(packetLength(packetPushStarted)) - sum(packetLength(packetPulled)) - sum(packetLength(packetRemoved)) - sum(packetLength(packetDropped))))"
+attr title "queue bit length"
+attr unit b
+146	80537 55 0 0 0 0 5 0 0 0 0
+vector 159 AgricultureNetwork.sensor3.wlan[0].radio.energyConsumer powerConsumption:vector ETV
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source powerConsumptionChanged
+attr title "Power consumption"
+attr unit W
+159	80592 22 0 0 0 0 2 0 0 0 0
+vector 160 AgricultureNetwork.sensor3.wlan[0].radio radioMode:vector ETV
+attr enum OFF,SLEEP,RECEIVER,TRANSMITTER,TRANSCEIVER,SWITCHING
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source radioModeChanged
+attr title "Radio mode"
+attr type enum
+160	80614 22 0 0 0 0 2 0 0 0 0
+vector 176 AgricultureNetwork.sensor3.udp passedUpPk:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetSentToUpper
+attr title "packets passed up, count"
+176	80636 11 0 0 0 0 1 0 0 0 0
+vector 177 AgricultureNetwork.sensor3.udp droppedPkWrongPort:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetDropReasonIsNoPortFound(packetDropped)
+attr title "packets dropped (wrong port), count"
+177	80647 11 0 0 0 0 1 0 0 0 0
+vector 178 AgricultureNetwork.sensor3.udp droppedPkBadChecksum:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetDropReasonIsIncorrectlyReceived(packetDropped)
+attr title "packets dropped (checksum error), count"
+178	80658 11 0 0 0 0 1 0 0 0 0
+vector 184 AgricultureNetwork.gateway.energyStorage powerConsumption:vector ETV
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source powerConsumptionChanged
+attr title "Power consumption"
+attr unit W
+184	80669 33 0 0 0 0 3 0 0 0 0
+vector 194 AgricultureNetwork.gateway.wlan[0].queue queueLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + count(packetPushStarted) - count(packetPulled) - count(packetRemoved) - count(packetDropped)))"
+attr title "queue length"
+attr unit pk
+194	80702 55 0 0 0 0 5 0 0 0 0
+vector 195 AgricultureNetwork.gateway.wlan[0].queue queueBitLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + sum(packetLength(packetPushStarted)) - sum(packetLength(packetPulled)) - sum(packetLength(packetRemoved)) - sum(packetLength(packetDropped))))"
+attr title "queue bit length"
+attr unit b
+195	80757 55 0 0 0 0 5 0 0 0 0
+vector 208 AgricultureNetwork.gateway.wlan[0].radio.energyConsumer powerConsumption:vector ETV
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source powerConsumptionChanged
+attr title "Power consumption"
+attr unit W
+208	80812 22 0 0 0 0 2 0 0 0 0
+vector 209 AgricultureNetwork.gateway.wlan[0].radio radioMode:vector ETV
+attr enum OFF,SLEEP,RECEIVER,TRANSMITTER,TRANSCEIVER,SWITCHING
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source radioModeChanged
+attr title "Radio mode"
+attr type enum
+209	80834 22 0 0 0 0 2 0 0 0 0
+vector 215 AgricultureNetwork.gateway.eth[0].queue queueLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + count(packetPushStarted) - count(packetPulled) - count(packetRemoved) - count(packetDropped)))"
+attr title "queue length"
+attr unit pk
+215	80856 55 0 0 0 0 5 0 0 0 0
+vector 216 AgricultureNetwork.gateway.eth[0].queue queueBitLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + sum(packetLength(packetPushStarted)) - sum(packetLength(packetPulled)) - sum(packetLength(packetRemoved)) - sum(packetLength(packetDropped))))"
+attr title "queue bit length"
+attr unit b
+216	80911 55 0 0 0 0 5 0 0 0 0
+vector 226 AgricultureNetwork.gateway.eth[0].mac transmitting:vector ETV
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "count(transmissionStarted) - count(transmissionEnded)"
+attr title "transmitting state"
+attr type int
+226	80966 22 0 0 0 0 2 0 0 0 0
+vector 250 AgricultureNetwork.gateway.udp passedUpPk:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetSentToUpper
+attr title "packets passed up, count"
+250	80988 11 0 0 0 0 1 0 0 0 0
+vector 251 AgricultureNetwork.gateway.udp droppedPkWrongPort:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetDropReasonIsNoPortFound(packetDropped)
+attr title "packets dropped (wrong port), count"
+251	80999 11 0 0 0 0 1 0 0 0 0
+vector 252 AgricultureNetwork.gateway.udp droppedPkBadChecksum:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetDropReasonIsIncorrectlyReceived(packetDropped)
+attr title "packets dropped (checksum error), count"
+252	81010 11 0 0 0 0 1 0 0 0 0
+vector 260 AgricultureNetwork.server.eth[0].queue queueLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + count(packetPushStarted) - count(packetPulled) - count(packetRemoved) - count(packetDropped)))"
+attr title "queue length"
+attr unit pk
+260	81021 55 0 0 0 0 5 0 0 0 0
+vector 261 AgricultureNetwork.server.eth[0].queue queueBitLength:vector ETV
+attr autoWarmupFilter false
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "warmup(atomic(constant0(packetPushEnded) + sum(packetLength(packetPushStarted)) - sum(packetLength(packetPulled)) - sum(packetLength(packetRemoved)) - sum(packetLength(packetDropped))))"
+attr title "queue bit length"
+attr unit b
+261	81076 55 0 0 0 0 5 0 0 0 0
+vector 271 AgricultureNetwork.server.eth[0].mac transmitting:vector ETV
+attr interpolationmode sample-hold
+attr recordingmode vector
+attr source "count(transmissionStarted) - count(transmissionEnded)"
+attr title "transmitting state"
+attr type int
+271	81131 22 0 0 0 0 2 0 0 0 0
+vector 295 AgricultureNetwork.server.udp passedUpPk:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetSentToUpper
+attr title "packets passed up, count"
+295	81153 11 0 0 0 0 1 0 0 0 0
+vector 296 AgricultureNetwork.server.udp droppedPkWrongPort:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetDropReasonIsNoPortFound(packetDropped)
+attr title "packets dropped (wrong port), count"
+296	81164 11 0 0 0 0 1 0 0 0 0
+vector 297 AgricultureNetwork.server.udp droppedPkBadChecksum:vector(count) ETV
+attr interpolationmode none
+attr recordingmode vector(count)
+attr source packetDropReasonIsIncorrectlyReceived(packetDropped)
+attr title "packets dropped (checksum error), count"
+297	81175 13 0 0 0 0 1 0 0 0 0
