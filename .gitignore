@@ -1,3 +1,5 @@
-simulations/results
+simulations/results/*.sca
+simulations/results/*.vec
+simulations/results/*.vci
 simulations/.qtenvrc
 .venv
