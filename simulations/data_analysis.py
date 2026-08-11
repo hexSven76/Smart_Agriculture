@@ -93,7 +93,7 @@ def extract_mac(df, filename):
         return str(rows.iloc[0]["attrvalue"])
 
     # Fallback
-    for mac in ["BMac", "XMac", "LMac"]:
+    for mac in ["BMac", "XMac", "LMac", "Ieee802154"]:
         if mac.lower() in filename.lower():
             return mac
 
