@@ -1,6 +1,6 @@
 [General]
-last-configname=Ieee802154_TxPower
-last-runnumber=0
+last-configname=BMac_PacketLength
+last-runnumber=3
 
 [RunModeProfiles]
 run-playback-speed=100

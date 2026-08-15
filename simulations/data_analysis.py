@@ -49,35 +49,104 @@ def get_vector_rows(df, module_pattern, metric_name):
 # Experiment-variable extraction
 # ============================================================
 
-def extract_experiment_variables(df):
-    """Extract experiment variables from the runattr iterationvars row."""
+def extract_experiment_variables(metrics_path):
+    """
+    Extract the actual experiment configuration from the corresponding
+    .sca file.
+    """
 
-    rows = df[
-        (df["type"] == "runattr") &
-        (df["attrname"] == "iterationvars")
-    ]
+    sca_path = metrics_path.with_name(
+        metrics_path.name.replace("_metrics.csv", ".sca")
+    )
 
-    if rows.empty:
-        return {
-            "numSensors": np.nan,
-            "txPower_mW": np.nan,
-            "sendInterval_s": np.nan,
-            "packetLength_Byte": np.nan,
-            "simTime_s": np.nan,
-        }
+    if not sca_path.exists():
+        raise FileNotFoundError(
+            f"Corresponding .sca file not found: {sca_path.name}"
+        )
 
-    text = str(rows.iloc[0]["attrvalue"])
+    config_records = []
 
-    def extract(pattern):
-        match = re.search(pattern, text)
-        return float(match.group(1)) if match else np.nan
+    with open(sca_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.rstrip("\n")
+
+            if not line.startswith("config "):
+                continue
+
+            parts = line.split(None, 2)
+
+            if len(parts) < 3:
+                continue
+
+            _, name, value = parts
+
+            config_records.append((name, value))
+
+    def parse_number(value):
+        match = re.search(
+            r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)",
+            value
+        )
+
+        if not match:
+            return np.nan
+
+        return float(match.group(0))
+
+    def get_values(name_patterns):
+        """
+        Return all configuration values matching any of the supplied
+        parameter names, preserving their order in the .sca file.
+        """
+
+        values = []
+
+        for name, value in config_records:
+            if name in name_patterns:
+                values.append((name, value))
+
+        return values
+
+    def get_experiment_value(name_patterns):
+        """
+        Get the experiment-specific value.
+
+        In the generated .sca files, experiment overrides occur before
+        the inherited Base configuration. Therefore, when multiple
+        matching configuration records exist, the first one is the
+        experiment-specific value.
+        """
+
+        values = get_values(name_patterns)
+
+        if not values:
+            return np.nan
+
+        return parse_number(values[0][1])
 
     return {
-        "numSensors": extract(r"numSensors\s*=\s*([\d.]+)"),
-        "txPower_mW": extract(r"txPower\s*=\s*([\d.]+)mW"),
-        "sendInterval_s": extract(r"sendInterval\s*=\s*([\d.]+)s"),
-        "packetLength_Byte": extract(r"packetLength\s*=\s*([\d.]+)Byte"),
-        "simTime_s": extract(r"simTime\s*=\s*([\d.]+)s"),
+        "numSensors": get_experiment_value([
+            "*.numSensors",
+        ]),
+
+        "txPower_mW": get_experiment_value([
+            "**.radio.transmitter.power",
+            "*.radio.transmitter.power",
+            "**.wlan[*].radio.transmitter.power",
+            "*.wlan[*].radio.transmitter.power",
+        ]),
+
+        "sendInterval_s": get_experiment_value([
+            "*.sensor[*].app[0].sendInterval",
+        ]),
+
+        "packetLength_Byte": get_experiment_value([
+            "*.sensor[*].app[0].messageLength",
+        ]),
+
+        "simTime_s": get_experiment_value([
+            "sim-time-limit",
+        ]),
     }
 
 
@@ -179,36 +248,32 @@ def calculate_end_to_end_delay(df):
 # Throughput
 # ============================================================
 
-def calculate_throughput(df):
+def calculate_throughput(df, sim_time):
     """
-    Calculate average server throughput.
+    Calculate application-level average throughput from
+    successfully received payload bytes.
 
-    Throughput vector:
-        vectime  = sampling times
-        vecvalue = throughput in bps
+    Throughput = received bytes * 8 / simulation time
     """
 
-    rows = get_vector_rows(
-        df,
-        r"^AgricultureNetwork\.server\.app\[0\]$",
-        "throughput:vector"
+    rows = df[
+        (df["type"] == "scalar") &
+        (df["module"] == "AgricultureNetwork.server.app[0]") &
+        (df["name"] == "packetReceived:sum(packetBytes)")
+    ]
+
+    if rows.empty or pd.isna(sim_time) or sim_time <= 0:
+        return np.nan
+
+    received_bytes = pd.to_numeric(
+        rows.iloc[0]["value"],
+        errors="coerce"
     )
 
-    if rows.empty:
+    if pd.isna(received_bytes):
         return np.nan
 
-    throughput_values = []
-
-    for _, row in rows.iterrows():
-        values = parse_vector_string(row["vecvalue"])
-
-        if len(values):
-            throughput_values.extend(values)
-
-    if not throughput_values:
-        return np.nan
-
-    return float(np.mean(throughput_values))
+    return (received_bytes * 8) / sim_time
 
 
 # ============================================================
@@ -306,13 +371,16 @@ def process_file(path):
 
     mac = extract_mac(df, path.name)
 
-    variables = extract_experiment_variables(df)
+    variables = extract_experiment_variables(path)
 
     packets_sent, packets_received, pdr = calculate_packet_metrics(df)
 
     mean_delay = calculate_end_to_end_delay(df)
 
-    avg_throughput = calculate_throughput(df)
+    avg_throughput = calculate_throughput(
+        df,
+        variables["simTime_s"]
+    )
 
     avg_sensor_power = calculate_sensor_power(df)
 
@@ -397,7 +465,8 @@ def make_graph(df, x, y, xlabel, ylabel, title, filename):
 def main():
 
     csv_files = sorted(
-        RESULTS_DIR.glob("*_metrics.csv")
+        path for path in RESULTS_DIR.glob("*_metrics.csv")
+        if path.name != "all_metrics.csv"
     )
 
     if not csv_files:
