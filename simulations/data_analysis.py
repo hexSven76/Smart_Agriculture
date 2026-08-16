@@ -49,105 +49,150 @@ def get_vector_rows(df, module_pattern, metric_name):
 # Experiment-variable extraction
 # ============================================================
 
-def extract_experiment_variables(metrics_path):
+def parse_value(value, unit=None):
     """
-    Extract the actual experiment configuration from the corresponding
-    .sca file.
+    Convert an OMNeT++ value such as:
+        2.24mW
+        10Byte
+        256B
+        5s
+        100
+
+    into a numeric value.
     """
 
-    sca_path = metrics_path.with_name(
-        metrics_path.name.replace("_metrics.csv", ".sca")
-    )
+    if pd.isna(value):
+        return np.nan
 
-    if not sca_path.exists():
-        raise FileNotFoundError(
-            f"Corresponding .sca file not found: {sca_path.name}"
+    text = str(value).strip()
+
+    if text == "":
+        return np.nan
+
+    # Accept both Byte and B
+    if unit == "Byte":
+        text = re.sub(r"Byte$", "", text, flags=re.IGNORECASE)
+
+    elif unit == "B":
+        text = re.sub(r"(Byte|B)$", "", text, flags=re.IGNORECASE)
+
+    elif unit:
+        text = re.sub(
+            rf"{re.escape(unit)}$",
+            "",
+            text,
+            flags=re.IGNORECASE
         )
 
-    config_records = []
+    # Remove whitespace
+    text = text.strip()
 
-    with open(sca_path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.rstrip("\n")
+    try:
+        return float(text)
+    except ValueError:
+        return np.nan
 
-            if not line.startswith("config "):
-                continue
 
-            parts = line.split(None, 2)
+def extract_experiment_variables(path):
+    """
+    Extract experiment variables from the metrics filename.
 
-            if len(parts) < 3:
-                continue
+    Example filename:
 
-            _, name, value = parts
+        BMac_NumSensors-100,
+        txPower=2.24mW,
+        numSensors=10,
+        simTime=30s,
+        sendInterval=1s,
+        packetLength=10Byte-#0_metrics.csv
 
-            config_records.append((name, value))
+    The value before the comma after the experiment name is the
+    actual varied experiment value.
 
-    def parse_number(value):
-        match = re.search(
-            r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)",
-            value
-        )
+    The key=value fields contain the fixed/default values.
+    """
+
+    filename = path.name
+
+    variables = {
+        "txPower_mW": np.nan,
+        "numSensors": np.nan,
+        "sendInterval_s": np.nan,
+        "packetLength_B": np.nan,
+        "simTime_s": np.nan,
+    }
+
+    # ============================================================
+    # 1. Extract fixed/default values from filename
+    # ============================================================
+
+    patterns = {
+        "txPower_mW": r"txPower=([^,]+)",
+        "numSensors": r"numSensors=([^,]+)",
+        "sendInterval_s": r"sendInterval=([^,]+)",
+        "packetLength_B": r"packetLength=([^,-]+)",
+        "simTime_s": r"simTime=([^,]+)",
+    }
+
+    for variable, pattern in patterns.items():
+
+        match = re.search(pattern, filename)
 
         if not match:
-            return np.nan
+            continue
 
-        return float(match.group(0))
+        value = match.group(1)
 
-    def get_values(name_patterns):
-        """
-        Return all configuration values matching any of the supplied
-        parameter names, preserving their order in the .sca file.
-        """
+        if variable == "txPower_mW":
+            variables[variable] = parse_value(value, "mW")
 
-        values = []
+        elif variable == "numSensors":
+            variables[variable] = parse_value(value)
 
-        for name, value in config_records:
-            if name in name_patterns:
-                values.append((name, value))
+        elif variable == "sendInterval_s":
+            variables[variable] = parse_value(value, "s")
 
-        return values
+        elif variable == "packetLength_B":
+            variables[variable] = parse_value(value, "B")
 
-    def get_experiment_value(name_patterns):
-        """
-        Get the experiment-specific value.
+        elif variable == "simTime_s":
+            variables[variable] = parse_value(value, "s")
 
-        In the generated .sca files, experiment overrides occur before
-        the inherited Base configuration. Therefore, when multiple
-        matching configuration records exist, the first one is the
-        experiment-specific value.
-        """
+    # ============================================================
+    # 2. Override the variable being experimentally varied
+    # ============================================================
 
-        values = get_values(name_patterns)
+    experiment_match = re.match(
+        r"^(?:BMac|XMac|LMac|Ieee802154)_([^,-]+)-([^,]+)",
+        filename
+    )
 
-        if not values:
-            return np.nan
+    if experiment_match:
 
-        return parse_number(values[0][1])
+        experiment = experiment_match.group(1)
+        experiment_value = experiment_match.group(2)
 
-    return {
-        "numSensors": get_experiment_value([
-            "*.numSensors",
-        ]),
+        if experiment == "TxPower":
+            variables["txPower_mW"] = parse_value(
+                experiment_value, "mW"
+            )
 
-        "txPower_mW": get_experiment_value([
-            "**.radio.transmitter.power",
-            "*.radio.transmitter.power",
-            "**.wlan[*].radio.transmitter.power",
-            "*.wlan[*].radio.transmitter.power",
-        ]),
+        elif experiment == "NumSensors":
+            variables["numSensors"] = parse_value(
+                experiment_value
+            )
 
-        "sendInterval_s": get_experiment_value([
-            "*.sensor[*].app[0].sendInterval",
-        ]),
+        elif experiment == "Traffic":
+            variables["sendInterval_s"] = parse_value(
+                experiment_value, "s"
+            )
 
-        "packetLength_Byte": get_experiment_value([
-            "*.sensor[*].app[0].messageLength",
-        ]),
+        elif experiment == "PacketLength":
+            variables["packetLength_B"] = parse_value(
+                experiment_value, "B"
+            )
 
-        "simTime_s": get_experiment_value([
-            "sim-time-limit",
-        ]),
-    }
+    return variables
 
 
 def extract_mac(df, filename):
@@ -287,7 +332,7 @@ def calculate_throughput(df, sim_time):
     if pd.isna(received_bytes):
         return np.nan
 
-    return (received_bytes * 8) / sim_time
+    return float((received_bytes * 8) / sim_time)
 
 
 # ============================================================
@@ -508,6 +553,16 @@ def main():
 
     result_df = pd.DataFrame(results)
 
+    # Sort for easier inspection
+    sort_columns = [
+        "Experiment",
+        "MAC",
+        "numSensors",
+        "txPower_mW",
+        "sendInterval_s",
+        "packetLength_B",
+    ]
+
     # Separate results by experiment type
     tx_power_df = result_df[
         result_df["Experiment"] == "TxPower"
@@ -523,16 +578,6 @@ def main():
 
     packet_length_df = result_df[
         result_df["Experiment"] == "PacketLength"
-    ]
-
-    # Sort for easier inspection
-    sort_columns = [
-        "Experiment",
-        "MAC",
-        "numSensors",
-        "txPower_mW",
-        "sendInterval_s",
-        "packetLength_Byte",
     ]
 
     result_df = result_df.sort_values(
@@ -622,7 +667,7 @@ def main():
 
     make_graph(
         packet_length_df,
-        "packetLength_Byte",
+        "packetLength_B",
         "PDR",
         "Packet Length (Byte)",
         "Packet Delivery Ratio",
