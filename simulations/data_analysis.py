@@ -151,7 +151,7 @@ def extract_experiment_variables(metrics_path):
 
 
 def extract_mac(df, filename):
-    """Get MAC/config name."""
+    """Get MAC name only."""
 
     rows = df[
         (df["type"] == "runattr") &
@@ -159,7 +159,8 @@ def extract_mac(df, filename):
     ]
 
     if not rows.empty:
-        return str(rows.iloc[0]["attrvalue"])
+        config_name = str(rows.iloc[0]["attrvalue"])
+        return config_name.split("_")[0]
 
     # Fallback
     for mac in ["BMac", "XMac", "LMac", "Ieee802154"]:
@@ -168,6 +169,19 @@ def extract_mac(df, filename):
 
     return "Unknown"
 
+
+def extract_experiment(filename):
+    """Extract experiment type from the beginning of the filename."""
+
+    match = re.match(
+        r"^(?:BMac|XMac|LMac|Ieee802154)_([^,-]+)",
+        filename
+    )
+
+    if match:
+        return match.group(1)
+
+    return "Unknown"
 
 # ============================================================
 # Packet metrics
@@ -370,6 +384,7 @@ def process_file(path):
     df = pd.read_csv(path, low_memory=False)
 
     mac = extract_mac(df, path.name)
+    experiment = extract_experiment(path.name)
 
     variables = extract_experiment_variables(path)
 
@@ -386,6 +401,7 @@ def process_file(path):
 
     result = {
         "MAC": mac,
+        "Experiment": experiment,
 
         **variables,
 
@@ -492,8 +508,26 @@ def main():
 
     result_df = pd.DataFrame(results)
 
+    # Separate results by experiment type
+    tx_power_df = result_df[
+        result_df["Experiment"] == "TxPower"
+    ]
+
+    num_sensors_df = result_df[
+        result_df["Experiment"] == "NumSensors"
+    ]
+
+    traffic_df = result_df[
+        result_df["Experiment"] == "Traffic"
+    ]
+
+    packet_length_df = result_df[
+        result_df["Experiment"] == "PacketLength"
+    ]
+
     # Sort for easier inspection
     sort_columns = [
+        "Experiment",
         "MAC",
         "numSensors",
         "txPower_mW",
@@ -527,7 +561,7 @@ def main():
     # ========================================================
 
     make_graph(
-        result_df,
+        tx_power_df,
         "txPower_mW",
         "PDR",
         "Transmit Power (mW)",
@@ -537,7 +571,7 @@ def main():
     )
 
     make_graph(
-        result_df,
+        tx_power_df,
         "txPower_mW",
         "meanE2EDelay_ms",
         "Transmit Power (mW)",
@@ -547,7 +581,7 @@ def main():
     )
 
     make_graph(
-        result_df,
+        tx_power_df,
         "txPower_mW",
         "averageThroughput_bps",
         "Transmit Power (mW)",
@@ -557,7 +591,7 @@ def main():
     )
 
     make_graph(
-        result_df,
+        tx_power_df,
         "txPower_mW",
         "averageSensorPower_mW",
         "Transmit Power (mW)",
@@ -567,13 +601,33 @@ def main():
     )
 
     make_graph(
-        result_df,
+        num_sensors_df,
         "numSensors",
         "PDR",
         "Number of Sensors",
         "Packet Delivery Ratio",
         "PDR vs Number of Sensors",
         "PDR_vs_NumSensors.png"
+    )
+
+    make_graph(
+    traffic_df,
+    "sendInterval_s",
+    "PDR",
+    "Send Interval (s)",
+    "Packet Delivery Ratio",
+    "PDR vs Send Interval",
+    "PDR_vs_SendInterval.png"
+    )
+
+    make_graph(
+        packet_length_df,
+        "packetLength_Byte",
+        "PDR",
+        "Packet Length (Byte)",
+        "Packet Delivery Ratio",
+        "PDR vs Packet Length",
+        "PDR_vs_PacketLength.png"
     )
 
     print("\nAnalysis complete.")
