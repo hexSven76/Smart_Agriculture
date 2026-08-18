@@ -4,21 +4,16 @@ import numpy as np
 import re
 import matplotlib.pyplot as plt
 
-
-# ============================================================
-# Configuration
-# ============================================================
-
+# configuration
 RESULTS_DIR = Path(__file__).parent / "results"
 OUTPUT_CSV = RESULTS_DIR / "all_metrics.csv"
 
 
-# ============================================================
-# CSV parsing helpers
-# ============================================================
+# ---------- CSV parsing helpers ----------
+
 
 def parse_vector_string(value):
-    """Convert a whitespace-separated vector string into floats."""
+    """convert a whitespace-separated vector string into floats."""
     if pd.isna(value) or str(value).strip() == "":
         return np.array([], dtype=float)
 
@@ -32,10 +27,7 @@ def parse_vector_string(value):
 
 
 def get_vector_rows(df, module_pattern, metric_name):
-    """
-    Return vector rows matching a module regex/glob-like pattern
-    and metric name.
-    """
+    """return vector rows matching a module regex/patternand metric name."""
     mask = (
         (df["type"] == "vector") &
         (df["module"].astype(str).str.match(module_pattern)) &
@@ -45,21 +37,11 @@ def get_vector_rows(df, module_pattern, metric_name):
     return df[mask]
 
 
-# ============================================================
-# Experiment-variable extraction
-# ============================================================
+# ---------- Experiment-variable extraction ----------
+
 
 def parse_value(value, unit=None):
-    """
-    Convert an OMNeT++ value such as:
-        2.24mW
-        10Byte
-        256B
-        5s
-        100
-
-    into a numeric value.
-    """
+    """convert simulation variables into numeric values."""
 
     if pd.isna(value):
         return np.nan
@@ -69,7 +51,7 @@ def parse_value(value, unit=None):
     if text == "":
         return np.nan
 
-    # Accept both Byte and B
+    # Byte and B are both valid
     if unit == "Byte":
         text = re.sub(r"Byte$", "", text, flags=re.IGNORECASE)
 
@@ -84,7 +66,7 @@ def parse_value(value, unit=None):
             flags=re.IGNORECASE
         )
 
-    # Remove whitespace
+    # remove whitespace
     text = text.strip()
 
     try:
@@ -94,23 +76,7 @@ def parse_value(value, unit=None):
 
 
 def extract_experiment_variables(path):
-    """
-    Extract experiment variables from the metrics filename.
-
-    Example filename:
-
-        BMac_NumSensors-100,
-        txPower=2.24mW,
-        numSensors=10,
-        simTime=30s,
-        sendInterval=1s,
-        packetLength=10Byte-#0_metrics.csv
-
-    The value before the comma after the experiment name is the
-    actual varied experiment value.
-
-    The key=value fields contain the fixed/default values.
-    """
+    """extract experiment variables from  *_metrics.csv files."""
 
     filename = path.name
 
@@ -122,9 +88,7 @@ def extract_experiment_variables(path):
         "simTime_s": np.nan,
     }
 
-    # ============================================================
-    # 1. Extract fixed/default values from filename
-    # ============================================================
+    # extracting fixed/default values from filename
 
     patterns = {
         "txPower_mW": r"txPower=([^,]+)",
@@ -158,9 +122,7 @@ def extract_experiment_variables(path):
         elif variable == "simTime_s":
             variables[variable] = parse_value(value, "s")
 
-    # ============================================================
-    # 2. Override the variable being experimentally varied
-    # ============================================================
+    # override experiemnt variable
 
     experiment_match = re.match(
         r"^(?:BMac|XMac|LMac|Ieee802154)_([^,-]+)-([^,]+)",
@@ -196,7 +158,7 @@ def extract_experiment_variables(path):
 
 
 def extract_mac(df, filename):
-    """Get MAC name only."""
+    """extracting MAC name."""
 
     rows = df[
         (df["type"] == "runattr") &
@@ -207,7 +169,6 @@ def extract_mac(df, filename):
         config_name = str(rows.iloc[0]["attrvalue"])
         return config_name.split("_")[0]
 
-    # Fallback
     for mac in ["BMac", "XMac", "LMac", "Ieee802154"]:
         if mac.lower() in filename.lower():
             return mac
@@ -216,7 +177,7 @@ def extract_mac(df, filename):
 
 
 def extract_experiment(filename):
-    """Extract experiment type from the beginning of the filename."""
+    """extract experiment type from the beginning of the filename."""
 
     match = re.match(
         r"^(?:BMac|XMac|LMac|Ieee802154)_([^,-]+)",
@@ -228,12 +189,12 @@ def extract_experiment(filename):
 
     return "Unknown"
 
-# ============================================================
-# Packet metrics
-# ============================================================
+
+# ---------- Packet metrics ----------
+
 
 def calculate_packet_metrics(df):
-    """Calculate total sent, received, and PDR."""
+    """calculate total sent, received, and PDR."""
 
     sent_mask = (
         (df["type"] == "scalar") &
@@ -268,18 +229,11 @@ def calculate_packet_metrics(df):
     return packets_sent, packets_received, pdr
 
 
-# ============================================================
-# End-to-end delay
-# ============================================================
+# ---------- End-to-end delay ----------
+
 
 def calculate_end_to_end_delay(df):
-    """
-    Calculate mean E2E delay from the server.app[0] vector.
-
-    IMPORTANT:
-    vectime = time at which measurement occurred
-    vecvalue = actual delay value
-    """
+    """calculate mean E2E delay from the server.app[0] vector."""
 
     rows = get_vector_rows(
         df,
@@ -303,17 +257,11 @@ def calculate_end_to_end_delay(df):
     return float(np.mean(delays))
 
 
-# ============================================================
-# Throughput
-# ============================================================
+# ---------- Throughput ----------
+
 
 def calculate_throughput(df, sim_time):
-    """
-    Calculate application-level average throughput from
-    successfully received payload bytes.
-
-    Throughput = received bytes * 8 / simulation time
-    """
+    """calculate Throughput = received bytes * 8 / simulation time"""
 
     rows = df[
         (df["type"] == "scalar") &
@@ -335,19 +283,11 @@ def calculate_throughput(df, sim_time):
     return float((received_bytes * 8) / sim_time)
 
 
-# ============================================================
-# Power consumption
-# ============================================================
+# ---------- Power consumption ----------
+
 
 def time_weighted_average(time_values, power_values):
-    """
-    Calculate a time-weighted average for a sample-hold vector.
-
-    For each sample:
-        power[i] applies until time[i+1].
-
-    The final sample is held until the end of the simulation.
-    """
+    """calculate a time-weighted average for a sample vector."""
 
     if len(time_values) == 0 or len(power_values) == 0:
         return np.nan
@@ -362,7 +302,7 @@ def time_weighted_average(time_values, power_values):
 
     durations = np.diff(times)
 
-    # Ignore invalid/negative intervals
+    # ignore negative intervals
     valid = durations >= 0
 
     weighted_sum = np.sum(
@@ -378,14 +318,8 @@ def time_weighted_average(time_values, power_values):
 
 
 def calculate_sensor_power(df):
-    """
-    Calculate average sensor power consumption.
-
-    Uses each sensor's:
-        wlan[*].radio.energyConsumer.powerConsumption:vector
-
-    Then averages across all sensors.
-    """
+    """calculate average sensor power consumption using each sensor's
+        wlan[*].radio.energyConsumer.powerConsumption:vector."""
 
     mask = (
         (df["type"] == "vector") &
@@ -415,63 +349,47 @@ def calculate_sensor_power(df):
     if not sensor_powers:
         return np.nan
 
-    # CSV stores watts -> convert to mW
+    # convert watts to mW
     return float(np.mean(sensor_powers) * 1000)
 
 
-# ============================================================
-# Process one CSV
-# ============================================================
+# ---------- Process one CSV ----------
+ 
 
 def process_file(path):
     print(f"Processing: {path.name}")
 
     df = pd.read_csv(path, low_memory=False)
-
     mac = extract_mac(df, path.name)
     experiment = extract_experiment(path.name)
-
     variables = extract_experiment_variables(path)
-
     packets_sent, packets_received, pdr = calculate_packet_metrics(df)
-
     mean_delay = calculate_end_to_end_delay(df)
-
-    avg_throughput = calculate_throughput(
-        df,
-        variables["simTime_s"]
-    )
-
+    avg_throughput = calculate_throughput(df, variables["simTime_s"])
     avg_sensor_power = calculate_sensor_power(df)
 
     result = {
         "MAC": mac,
         "Experiment": experiment,
-
         **variables,
-
         "packetsSent": packets_sent,
         "packetsReceived": packets_received,
         "PDR": pdr,
-
         "meanE2EDelay_s": mean_delay,
         "meanE2EDelay_ms": (
             mean_delay * 1000
             if not np.isnan(mean_delay)
             else np.nan
         ),
-
         "averageThroughput_bps": avg_throughput,
-
         "averageSensorPower_mW": avg_sensor_power,
     }
 
     return result
 
 
-# ============================================================
-# Graph generation
-# ============================================================
+# ---------- Graph generation ----------
+ 
 
 def make_graph(df, x, y, xlabel, ylabel, title, filename):
 
@@ -519,9 +437,8 @@ def make_graph(df, x, y, xlabel, ylabel, title, filename):
     print(f"Created graph: {output.name}")
 
 
-# ============================================================
-# Main
-# ============================================================
+# ---------- Main ----------
+ 
 
 def main():
 
@@ -553,7 +470,6 @@ def main():
 
     result_df = pd.DataFrame(results)
 
-    # Sort for easier inspection
     sort_columns = [
         "Experiment",
         "MAC",
@@ -601,9 +517,7 @@ def main():
 
     print(f"\nSaved: {OUTPUT_CSV}")
 
-    # ========================================================
     # Graphs
-    # ========================================================
 
     make_graph(
         tx_power_df,
