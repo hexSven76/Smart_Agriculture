@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 # configuration
 RESULTS_DIR = Path(__file__).parent / "results"
 OUTPUT_CSV = RESULTS_DIR / "all_metrics.csv"
+SIMULATION_TIME = 30.0
 
 
 # ---------- CSV parsing helpers ----------
@@ -80,78 +81,56 @@ def extract_experiment_variables(path):
 
     filename = path.name
 
+    # default values from Base configuration
     variables = {
-        "txPower_mW": np.nan,
-        "numSensors": np.nan,
-        "sendInterval_s": np.nan,
-        "packetLength_B": np.nan,
-        "simTime_s": np.nan,
+        "txPower_mW": 2.24,
+        "numSensors": 10.0,
+        "sendInterval_s": 1.0,
+        "packetLength_B": 10.0,
     }
 
-    # extracting fixed/default values from filename
-
-    patterns = {
-        "txPower_mW": r"txPower=([^,]+)",
-        "numSensors": r"numSensors=([^,]+)",
-        "sendInterval_s": r"sendInterval=([^,]+)",
-        "packetLength_B": r"packetLength=([^,-]+)",
-        "simTime_s": r"simTime=([^,]+)",
-    }
-
-    for variable, pattern in patterns.items():
-
-        match = re.search(pattern, filename)
-
-        if not match:
-            continue
-
-        value = match.group(1)
-
-        if variable == "txPower_mW":
-            variables[variable] = parse_value(value, "mW")
-
-        elif variable == "numSensors":
-            variables[variable] = parse_value(value)
-
-        elif variable == "sendInterval_s":
-            variables[variable] = parse_value(value, "s")
-
-        elif variable == "packetLength_B":
-            variables[variable] = parse_value(value, "B")
-
-        elif variable == "simTime_s":
-            variables[variable] = parse_value(value, "s")
-
-    # override experiemnt variable
-
-    experiment_match = re.match(
-        r"^(?:BMac|XMac|LMac|Ieee802154)_([^,-]+)-([^,]+)",
+    match = re.match(
+        r"^(?:BMac|XMac|LMac|Ieee802154)_"
+        r"(TxPower|NumSensors|Traffic|PacketLength)-"
+        r"(.+?)-#\d+_metrics\.csv$",
         filename
     )
 
-    if experiment_match:
+    if not match:
+        return variables
 
-        experiment = experiment_match.group(1)
-        experiment_value = experiment_match.group(2)
+    experiment = match.group(1)
+    value = match.group(2)
 
-        if experiment == "TxPower":
-            variables["txPower_mW"] = parse_value(
-                experiment_value, "mW"
-            )
+    if experiment == "TxPower":
 
-        elif experiment == "NumSensors":
+        variables["txPower_mW"] = parse_value(value, "mW")
+
+    elif experiment == "NumSensors":
+
+        match_value = re.match(r"numSensors=(.+)", value)
+
+        if match_value:
             variables["numSensors"] = parse_value(
-                experiment_value
+                match_value.group(1)
             )
 
-        elif experiment == "Traffic":
+    elif experiment == "Traffic":
+
+        match_value = re.match(r"sendInterval=(.+)", value)
+
+        if match_value:
             variables["sendInterval_s"] = parse_value(
-                experiment_value, "s"
+                match_value.group(1), "s"
             )
 
-        elif experiment == "PacketLength":
+    elif experiment == "PacketLength":
+
+        match_value = re.match(r"packetLength=(.+)", value)
+
+        if match_value:
             variables["packetLength_B"] = parse_value(
-                experiment_value, "B"
+                match_value.group(1), "B"
             )
 
     return variables
@@ -365,7 +344,7 @@ def process_file(path):
     variables = extract_experiment_variables(path)
     packets_sent, packets_received, pdr = calculate_packet_metrics(df)
     mean_delay = calculate_end_to_end_delay(df)
-    avg_throughput = calculate_throughput(df, variables["simTime_s"])
+    avg_throughput = calculate_throughput(df, SIMULATION_TIME)
     avg_sensor_power = calculate_sensor_power(df)
 
     result = {
