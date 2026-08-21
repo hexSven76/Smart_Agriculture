@@ -4,7 +4,7 @@ cd "$(dirname "$0")" || exit 1
 
 PROJECT_SRC="../src"
 INET_SRC="C:/omnetpp/omnetpp-6.4.0/samples/inet-4.6.0/src"
-INET_LIB="C:/omnetpp/omnetpp-6.4.0/samples/inet-4.6.0/src/INET"
+INET_LIB="C:/omnetpp/omnetpp-6.4.0/samples/inet-4.6.0/src/libINET.dll"
 
 CONFIGS=(
     "Ieee802154_NumSensors"

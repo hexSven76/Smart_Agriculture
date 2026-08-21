@@ -208,6 +208,14 @@ def calculate_packet_metrics(df):
     return packets_sent, packets_received, pdr
 
 
+def calculate_packet_loss_ratio(pdr):
+    """calculate Packet Loss Ratio from PDR."""
+    if pd.isna(pdr):
+        return np.nan
+
+    return 1.0 - pdr
+
+
 # ---------- End-to-end delay ----------
 
 
@@ -332,6 +340,18 @@ def calculate_sensor_power(df):
     return float(np.mean(sensor_powers) * 1000)
 
 
+def calculate_energy_efficiency(throughput_bps, sensor_power_mW):
+    """calculate energy efficiency."""
+    if pd.isna(throughput_bps) or pd.isna(sensor_power_mW):
+        return np.nan
+
+    if sensor_power_mW <= 0:
+        return np.nan
+
+    # bps / mW = kbits/J
+    return throughput_bps / sensor_power_mW
+
+
 # ---------- Process one CSV ----------
  
 
@@ -346,6 +366,8 @@ def process_file(path):
     mean_delay = calculate_end_to_end_delay(df)
     avg_throughput = calculate_throughput(df, SIMULATION_TIME)
     avg_sensor_power = calculate_sensor_power(df)
+    plr = calculate_packet_loss_ratio(pdr)
+    energy_efficiency = calculate_energy_efficiency(avg_throughput, avg_sensor_power)
 
     result = {
         "MAC": mac,
@@ -354,6 +376,7 @@ def process_file(path):
         "packetsSent": packets_sent,
         "packetsReceived": packets_received,
         "PDR": pdr,
+        "PLR": plr,
         "meanE2EDelay_s": mean_delay,
         "meanE2EDelay_ms": (
             mean_delay * 1000
@@ -362,6 +385,7 @@ def process_file(path):
         ),
         "averageThroughput_bps": avg_throughput,
         "averageSensorPower_mW": avg_sensor_power,
+        "energyEfficiency_kbits_per_J": energy_efficiency,
     }
 
     return result
@@ -567,6 +591,87 @@ def main():
         "PDR vs Packet Length",
         "PDR_vs_PacketLength.png"
     )
+
+    make_graph(
+    tx_power_df,
+    "txPower_mW",
+    "PLR",
+    "Transmit Power (mW)",
+    "Packet Loss Ratio",
+    "Packet Loss Ratio vs Transmit Power",
+    "PLR_vs_TxPower.png"
+    )
+
+    make_graph(
+    num_sensors_df,
+    "numSensors",
+    "PLR",
+    "Number of Sensors",
+    "Packet Loss Ratio",
+    "Packet Loss Ratio vs Number of Sensors",
+    "PLR_vs_NumSensors.png"
+    )
+
+    make_graph(
+    traffic_df,
+    "sendInterval_s",
+    "PLR",
+    "Send Interval (s)",
+    "Packet Loss Ratio",
+    "Packet Loss Ratio vs Send Interval",
+    "PLR_vs_SendInterval.png"
+    )
+
+    make_graph(
+    packet_length_df,
+    "packetLength_B",
+    "PLR",
+    "Packet Length (Byte)",
+    "Packet Loss Ratio",
+    "Packet Loss Ratio vs Packet Length",
+    "PLR_vs_PacketLength.png"
+    )
+
+    make_graph(
+    tx_power_df,
+    "txPower_mW",
+    "energyEfficiency_kbits_per_J",
+    "Transmit Power (mW)",
+    "Energy Efficiency (kbits/J)",
+    "Energy Efficiency vs Transmit Power",
+    "EnergyEfficiency_vs_TxPower.png"
+    )
+
+    make_graph(
+    num_sensors_df,
+    "numSensors",
+    "energyEfficiency_kbits_per_J",
+    "Number of Sensors",
+    "Energy Efficiency (kbits/J)",
+    "Energy Efficiency vs Number of Sensors",
+    "EnergyEfficiency_vs_NumSensors.png"
+    )
+
+    make_graph(
+    traffic_df,
+    "sendInterval_s",
+    "energyEfficiency_kbits_per_J",
+    "Send Interval (s)",
+    "Energy Efficiency (kbits/J)",
+    "Energy Efficiency vs Send Interval",
+    "EnergyEfficiency_vs_SendInterval.png"
+    )
+
+    make_graph(
+    packet_length_df,
+    "packetLength_B",
+    "energyEfficiency_kbits_per_J",
+    "Packet Length (Byte)",
+    "Energy Efficiency (kbits/J)",
+    "Energy Efficiency vs Packet Length",
+    "EnergyEfficiency_vs_PacketLength.png"
+    )
+
 
     print("\nAnalysis complete.")
 
