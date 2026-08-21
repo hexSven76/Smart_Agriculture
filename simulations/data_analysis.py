@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 # configuration
 RESULTS_DIR = Path(__file__).parent / "results"
 OUTPUT_CSV = RESULTS_DIR / "all_metrics.csv"
-SIMULATION_TIME = 30.0
+SIMULATION_TIME = 10.0
 
 
 # ---------- CSV parsing helpers ----------
@@ -473,6 +473,35 @@ def main():
 
     result_df = pd.DataFrame(results)
 
+    # Average repetitions of each experiment
+    group_columns = [
+        "MAC",
+        "Experiment",
+        "numSensors",
+        "txPower_mW",
+        "sendInterval_s",
+        "packetLength_B",
+    ]
+
+    metric_columns = [
+        "packetsSent",
+        "packetsReceived",
+        "PDR",
+        "PLR",
+        "meanE2EDelay_s",
+        "meanE2EDelay_ms",
+        "averageThroughput_bps",
+        "averageSensorPower_mW",
+        "energyEfficiency_kbits_per_J",
+    ]
+
+    result_df = (
+        result_df
+        .groupby(group_columns, dropna=False)[metric_columns]
+        .mean()
+        .reset_index()
+    )
+
     sort_columns = [
         "Experiment",
         "MAC",
@@ -573,13 +602,13 @@ def main():
     )
 
     make_graph(
-    traffic_df,
-    "sendInterval_s",
-    "PDR",
-    "Send Interval (s)",
-    "Packet Delivery Ratio",
-    "PDR vs Send Interval",
-    "PDR_vs_SendInterval.png"
+        traffic_df,
+        "sendInterval_s",
+        "PDR",
+        "Send Interval (s)",
+        "Packet Delivery Ratio",
+        "PDR vs Send Interval",
+        "PDR_vs_SendInterval.png"
     )
 
     make_graph(
@@ -593,83 +622,83 @@ def main():
     )
 
     make_graph(
-    tx_power_df,
-    "txPower_mW",
-    "PLR",
-    "Transmit Power (mW)",
-    "Packet Loss Ratio",
-    "Packet Loss Ratio vs Transmit Power",
-    "PLR_vs_TxPower.png"
+        tx_power_df,
+        "txPower_mW",
+        "PLR",
+        "Transmit Power (mW)",
+        "Packet Loss Ratio",
+        "Packet Loss Ratio vs Transmit Power",
+        "PLR_vs_TxPower.png"
     )
 
     make_graph(
-    num_sensors_df,
-    "numSensors",
-    "PLR",
-    "Number of Sensors",
-    "Packet Loss Ratio",
-    "Packet Loss Ratio vs Number of Sensors",
-    "PLR_vs_NumSensors.png"
+        num_sensors_df,
+        "numSensors",
+        "PLR",
+        "Number of Sensors",
+        "Packet Loss Ratio",
+        "Packet Loss Ratio vs Number of Sensors",
+        "PLR_vs_NumSensors.png"
     )
 
     make_graph(
-    traffic_df,
-    "sendInterval_s",
-    "PLR",
-    "Send Interval (s)",
-    "Packet Loss Ratio",
-    "Packet Loss Ratio vs Send Interval",
-    "PLR_vs_SendInterval.png"
+        traffic_df,
+        "sendInterval_s",
+        "PLR",
+        "Send Interval (s)",
+        "Packet Loss Ratio",
+        "Packet Loss Ratio vs Send Interval",
+        "PLR_vs_SendInterval.png"
     )
 
     make_graph(
-    packet_length_df,
-    "packetLength_B",
-    "PLR",
-    "Packet Length (Byte)",
-    "Packet Loss Ratio",
-    "Packet Loss Ratio vs Packet Length",
-    "PLR_vs_PacketLength.png"
+        packet_length_df,
+        "packetLength_B",
+        "PLR",
+        "Packet Length (Byte)",
+        "Packet Loss Ratio",
+        "Packet Loss Ratio vs Packet Length",
+        "PLR_vs_PacketLength.png"
     )
 
     make_graph(
-    tx_power_df,
-    "txPower_mW",
-    "energyEfficiency_kbits_per_J",
-    "Transmit Power (mW)",
-    "Energy Efficiency (kbits/J)",
-    "Energy Efficiency vs Transmit Power",
-    "EnergyEfficiency_vs_TxPower.png"
+        tx_power_df,
+        "txPower_mW",
+        "energyEfficiency_kbits_per_J",
+        "Transmit Power (mW)",
+        "Energy Efficiency (kbits/J)",
+        "Energy Efficiency vs Transmit Power",
+        "EnergyEfficiency_vs_TxPower.png"
     )
 
     make_graph(
-    num_sensors_df,
-    "numSensors",
-    "energyEfficiency_kbits_per_J",
-    "Number of Sensors",
-    "Energy Efficiency (kbits/J)",
-    "Energy Efficiency vs Number of Sensors",
-    "EnergyEfficiency_vs_NumSensors.png"
+        num_sensors_df,
+        "numSensors",
+        "energyEfficiency_kbits_per_J",
+        "Number of Sensors",
+        "Energy Efficiency (kbits/J)",
+        "Energy Efficiency vs Number of Sensors",
+        "EnergyEfficiency_vs_NumSensors.png"
     )
 
     make_graph(
-    traffic_df,
-    "sendInterval_s",
-    "energyEfficiency_kbits_per_J",
-    "Send Interval (s)",
-    "Energy Efficiency (kbits/J)",
-    "Energy Efficiency vs Send Interval",
-    "EnergyEfficiency_vs_SendInterval.png"
+        traffic_df,
+        "sendInterval_s",
+        "energyEfficiency_kbits_per_J",
+        "Send Interval (s)",
+        "Energy Efficiency (kbits/J)",
+        "Energy Efficiency vs Send Interval",
+        "EnergyEfficiency_vs_SendInterval.png"
     )
 
     make_graph(
-    packet_length_df,
-    "packetLength_B",
-    "energyEfficiency_kbits_per_J",
-    "Packet Length (Byte)",
-    "Energy Efficiency (kbits/J)",
-    "Energy Efficiency vs Packet Length",
-    "EnergyEfficiency_vs_PacketLength.png"
+        packet_length_df,
+        "packetLength_B",
+        "energyEfficiency_kbits_per_J",
+        "Packet Length (Byte)",
+        "Energy Efficiency (kbits/J)",
+        "Energy Efficiency vs Packet Length",
+        "EnergyEfficiency_vs_PacketLength.png"
     )
 
 
