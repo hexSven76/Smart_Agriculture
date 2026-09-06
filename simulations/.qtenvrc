@@ -1,9 +1,9 @@
 [General]
-last-configname=XMac
-last-runnumber=0
+last-configname=BMac_NumSensors
+last-runnumber=8
 
 [RunModeProfiles]
-run-playback-speed=0.3019951720402016
+run-playback-speed=4.677351412871983
 run-min-playback-speed=0.01
 run-max-playback-speed=100
 run-min-animation-speed=nan

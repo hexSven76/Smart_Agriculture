@@ -9,7 +9,7 @@ import inet.visualizer.canvas.integrated.IntegratedCanvasVisualizer;
 network AgricultureNetwork
 {
     parameters:
-        int numSensors = default(4);
+        int numSensors = default(10);
         
     @display("bgb=600,600;bgi=farm,s");
 
